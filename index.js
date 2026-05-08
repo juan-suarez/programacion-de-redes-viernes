@@ -8,8 +8,42 @@ function notificarPeticiones(peticion, respuesta, siguiente){
   siguiente()
 }
 
+function contentTypeMiddleware(peticion, respuesta, siguiente){
+  const headers = peticion.headers
+  const contentType = headers["content-type"]
+  if(contentType === undefined){
+    respuesta.status(400).send("Añade content-type a los headers")
+  }
+  if(contentType === "application/json" || contentType == "text/plain"){
+    siguiente()
+  }
+  else{
+    respuesta.sendStatus(415)
+  }
+}
+
+function authorizationMiddleware(peticion, respuesta, siguiente){
+  const authorizationPassword = "1234"
+  const headers = peticion.headers
+  const authorization = headers["authorization"]
+  if(authorization === undefined){
+    respuesta.status(400).send("Añade una autorizacion a los headers")
+  }
+  if(authorization === authorizationPassword){
+    siguiente()
+  }
+  else{
+    respuesta.sendStatus(401)
+  }
+
+}
+
+//servidor.use(authorizationMiddleware)
+
 servidor.use(notificarPeticiones)
+servidor.use(contentTypeMiddleware)
 servidor.use(express.json())
+
 
 ///// funciones GET, POST , DELETe, PUT /////////////
 
@@ -20,7 +54,7 @@ function getRedes(peticion, respuesta) {
   body = peticion.body
   // console.log(headers)
   console.log(body)
-  respuesta.status(200).json(headers)
+  respuesta.status(200).send("holaaaa!!!")
 }
 
 function postParaRedes(peticion, respuesta) {
@@ -42,10 +76,12 @@ function postEstudiantes(peticion, respuesta){
 }
 
 
-servidor.get("/redes", getRedes)
+servidor.get("/redes", authorizationMiddleware ,getRedes)
 servidor.get("/estudiantes", getEstudiantes)
 servidor.post("/redes", postParaRedes)
 servidor.post("/estudiantes", postEstudiantes)
+
+
 
 
 
