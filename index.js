@@ -1,6 +1,13 @@
+const { disconnect } = require('cluster')
 const express = require('express')
+const http = require("http")
+const { Server } = require("socket.io")
+
 const servidor = express()
+const app  = http.createServer(servidor)
 const port = 3000
+
+const sesion = new Server(app)
 
 /////////////middlewares///////////////
 function notificarPeticiones(peticion, respuesta, siguiente){
@@ -81,12 +88,30 @@ servidor.get("/estudiantes", getEstudiantes)
 servidor.post("/redes", postParaRedes)
 servidor.post("/estudiantes", postEstudiantes)
 
+////// sesion ///////////
 
+function onMessage(data){
+  console.log(data)
+  sesion.emit("respuesta", "hola te estoy respondiendo!")
+}
 
+function desconectar(){
+  console.log("se ha desconectado: ")
+}
+
+function initSesion(cliente){
+  console.log("cliente conectado", cliente.id)
+
+  cliente.on("mensaje", onMessage)
+
+  sesion.on("disconnect", desconectar)
+}
+
+sesion.on("connection", initSesion )
 
 
 /////     inicializacion     ///////////////////
 function iniciarServidor() {
   console.log('Servidor escuchando')
 }
-servidor.listen(port, iniciarServidor)
+app.listen(port, iniciarServidor)
